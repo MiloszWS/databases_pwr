@@ -1,3 +1,6 @@
+CREATE DATABASE IF NOT EXISTS booksy_db;
+USE booksy_db;
+
 -- 1
 CREATE TABLE `trainers` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
