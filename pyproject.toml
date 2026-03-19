@@ -1,0 +1,19 @@
+[project]
+name = "booksy-clone-db"
+version = "0.1.0"
+description = "System rezerwacji miejsc u trenera personalnego (Projekt na Zaawansowane Bazy Danych)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.29.0",
+    "sqlalchemy>=2.0.29",
+    "pymysql>=1.1.0"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = false
