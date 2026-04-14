@@ -1,6 +1,20 @@
 CREATE DATABASE IF NOT EXISTS booksy_db;
 USE booksy_db;
 
+CREATE TABLE `voivodeships` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL UNIQUE,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `cities` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `voivodeship_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_cities_voivodeship` FOREIGN KEY (`voivodeship_id`) REFERENCES `voivodeships` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 -- 1
 CREATE TABLE `trainers` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -28,7 +42,10 @@ CREATE TABLE `gyms` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) DEFAULT NULL,
   `address` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `city_id` int(11) DEFAULT NULL,
+  `street_address` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_gyms_city` FOREIGN KEY (`city_id`) REFERENCES `cities` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- 4 
@@ -63,7 +80,6 @@ CREATE TABLE `bookings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `slot_id` int(11) DEFAULT NULL,
   `client_id` int(11) DEFAULT NULL,
-  `payment_status` enum('paid','unpaid') DEFAULT 'unpaid',
   `notes` varchar(255) DEFAULT NULL,
   `status` enum('confirmed','pending','refused') DEFAULT 'pending',
   PRIMARY KEY (`id`),
@@ -88,3 +104,32 @@ CREATE TABLE `trainer_services` (
   CONSTRAINT `fk_ts_trainer` FOREIGN KEY (`trainer_id`) REFERENCES `trainers` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_ts_service` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `payments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `booking_id` int(11) NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `payment_date` datetime DEFAULT CURRENT_TIMESTAMP,
+  `payment_method` enum('card', 'cash', 'transfer', 'blik') NOT NULL,
+  `status` enum('completed', 'pending', 'refunded', 'failed') DEFAULT 'pending',
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_payments_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE OR REPLACE VIEW available_slots_view AS
+SELECT 
+    s.id AS slot_id,
+    s.start_time,
+    s.end_time,
+    s.capacity,
+    t.full_name AS trainer_name,
+    g.name AS gym_name,
+    c.name AS city_name,
+    sv.name AS service_name,
+    (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status != 'refused') AS current_reservations,
+    (s.capacity - (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status != 'refused')) AS remaining_capacity
+FROM slots s
+JOIN trainers t ON s.trainer_id = t.id
+JOIN gyms g ON s.gym_id = g.id
+JOIN cities c ON g.city_id = c.id
+JOIN services sv ON s.service_id = sv.id;
