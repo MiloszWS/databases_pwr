@@ -22,10 +22,25 @@ def get_trainers():
             trainers_list = []
             for row in result:
                 trainers_list.append({"id": row.id, "name": row.full_name, "email": row.email})
-            #ewentualnie mozna zrobić tak:
-            #trainers_list = [dict(row._mapping) for row in result] - automatycznie zamienia wiersze na wyrazy
             return {"trainers": trainers_list}
 
     except Exception as e:
         # Obsługa błędu jeśli nie stworzymy pliku
         raise HTTPException(status_code=500, detail=f"Błąd bazy: {str(e)}")
+@app.get("/slots")
+def get_available_slots():
+    query = get_sql_query("get_available_slots")
+    with engine.connect() as conn:
+        result = conn.execute(query)
+        return {"available_slots": [dict(row._mapping) for row in result]}
+@app.post("/book")
+def make_booking(slot_id: int, client_id: int):
+    query = get_sql_query("create_booking")
+    with engine.begin() as conn:  # engine.begin automatycznie zatwierdzi zmiany (commit)
+        result = conn.execute(query, {"sid": slot_id, "cid": client_id})
+
+        # Jeśli nic nie wstawiono, znaczy że nie było miejsc
+        if result.rowcount == 0:
+            raise HTTPException(status_code=400, detail="Brak wolnych miejsc w tym slocie")
+
+        return {"message": "Rezerwacja udana"}

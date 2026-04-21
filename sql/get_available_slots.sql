@@ -1,0 +1,1 @@
+SELECT * FROM available_slots_view WHERE remaining_capacity > 0
