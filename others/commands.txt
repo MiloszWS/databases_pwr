@@ -1,6 +1,0 @@
-1. Reload aplikacji:
-uvicorn app.main:app --reload
-2. Połączenie z aplikacją:
-http://127.0.0.1:8000
-3. Lista wszystkich endpointów:
-http://127.0.0.1:8000/docs
