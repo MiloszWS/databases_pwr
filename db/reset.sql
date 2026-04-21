@@ -1,17 +1,7 @@
--- ==========================================================
--- SKRYPT CAŁKOWITEGO RESETU BAZY DANYCH BOOKSY_DB
--- ==========================================================
-
--- 1. Całkowite usunięcie bazy, jeśli istnieje
 DROP DATABASE IF EXISTS booksy_db;
 
--- 2. Tworzenie świeżej bazy danych
 CREATE DATABASE booksy_db;
 USE booksy_db;
-
--- ==========================================================
--- CZĘŚĆ 1: STRUKTURA TABEL (na podstawie booksy_db.sql)
--- ==========================================================
 
 CREATE TABLE `voivodeships` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -120,7 +110,6 @@ CREATE TABLE `payments` (
   CONSTRAINT `fk_payments_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- 3. Tworzenie widoku dostępności
 CREATE OR REPLACE VIEW available_slots_view AS
 SELECT 
     s.id AS slot_id,
@@ -139,9 +128,8 @@ JOIN gyms g ON s.gym_id = g.id
 JOIN cities c ON g.city_id = c.id
 JOIN services sv ON s.service_id = sv.id;
 
--- ==========================================================
--- CZĘŚĆ 2: DANE TESTOWE (na podstawie seed.sql)
--- ==========================================================
+
+-- DANE TESTOWE (na podstawie seed.sql)
 
 INSERT INTO voivodeships (name) VALUES ('Dolnośląskie'), ('Mazowieckie'), ('Małopolskie');
 
