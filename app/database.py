@@ -2,9 +2,9 @@ import os
 from sqlalchemy import create_engine, text
 
 # Połączenie: użytkownik root, brak hasła, localhost, port 3306, baza booksy_db
-DATABASE_URL = "mysql+pymysql://root:@localhost:3306/booksy_db"
+DATABASE_URL = "mysql+pymysql://root:root_password@127.0.0.1:3307/booksy_db"
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True) #pool_pre_ping odswieza polaczenie, bo xampp sam z sibie potrafi sie wylaczyc
+engine = create_engine(DATABASE_URL, pool_size=20, max_overflow=40, pool_pre_ping=True) #pool_pre_ping odswieza polaczenie, bo xampp sam z sibie potrafi sie wylaczyc
 
 #To jest po to abym nie musiał za każdym razem hardkodowac "connection.execute"
 def get_sql_query(query_name: str):
@@ -16,4 +16,4 @@ def get_sql_query(query_name: str):
         raise FileNotFoundError(f"Nie znaleziono pliku z kwerendą: {file_path}")
 
     with open(file_path, "r", encoding="utf-8") as f:
-        return text(f.read())
+        return f.read()

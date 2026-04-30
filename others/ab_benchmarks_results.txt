@@ -1,0 +1,517 @@
+Testy ApacheBench
+---------------------------------------------------------------------------
+Pierwsza próba:
+
+PS C:\xampp\apache\bin> .\ab.exe -n 2000 -c 50 http://127.0.0.1:8000/slots
+This is ApacheBench, Version 2.3 <$Revision: 1903618 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+Completed 200 requests
+Completed 400 requests
+
+
+Server Software:        uvicorn
+Server Hostname:        127.0.0.1
+Server Port:            8000
+
+Document Path:          /slots
+Document Length:        22270337 bytes
+
+Concurrency Level:      50
+Time taken for tests:   521.728 seconds
+Complete requests:      428
+Failed requests:        292
+   (Connect: 0, Receive: 0, Length: 292, Exceptions: 0)
+Non-2xx responses:      292
+Total transferred:      3028844924 bytes
+HTML transferred:       3028776928 bytes
+Requests per second:    0.82 [#/sec] (mean)
+Time per request:       60949.491 [ms] (mean)
+Time per request:       1218.990 [ms] (mean, across all concurrent requests)
+Transfer rate:          5669.35 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.3      0       2
+Processing:  2819 56896 29371.9  44831  127106
+Waiting:     2773 56869 29353.2  44827  127066
+Total:       2819 56896 29371.9  44831  127107
+
+Percentage of the requests served within a certain time (ms)
+  50%  44831
+  66%  52251
+  75%  87213
+  80%  95108
+  90%  105318
+  95%  112609
+  98%  117929
+  99%  119589
+ 100%  127107 (longest request)
+
+Test aborted after 10 failures
+
+apr_socket_connect(): not a socket (128)
+Total of 428 requests completed
+
+Wnioski: 
+- brak ograniczenia wyświetlanej liczby slotów w tym requeście (wyświetla 100 000 slotow na raz, dodaje limit na 100 slotów)
+- za mała pula w silniku
+- obliczanie w locie zamiast indexow?
+
+----------------------------------------------------------------------------------------------------
+TESTY LICZBA SLOTOW/STRONA (2 CPU; 50 userow; 1000 requestow)
+----------------------------------------------------------------------------------------------------
+Próba 2:
+ - 1000 zapytan, 50 userow
+ - dodanie limitu 100 na stronę przy wyswietlaniu slotow
+ - zwiększenie puli do pool_size=20, max_overflow=40
+ 
+ 
+Finished 1000 requests
+
+Server Software:        uvicorn
+Server Hostname:        127.0.0.1
+Server Port:            8000
+
+Document Path:          /slots
+Document Length:        20181 bytes
+
+Concurrency Level:      50
+Time taken for tests:   4.958 seconds
+Complete requests:      1000
+Failed requests:        0
+Total transferred:      20328000 bytes
+HTML transferred:       20181000 bytes
+Requests per second:    201.70 [#/sec] (mean)
+Time per request:       247.890 [ms] (mean)
+Time per request:       4.958 [ms] (mean, across all concurrent requests)
+Transfer rate:          4004.10 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       1
+Processing:    31  244  45.1    250     380
+Waiting:       25  224  43.3    232     360
+Total:         31  244  45.1    250     380
+
+Percentage of the requests served within a certain time (ms)
+  50%    250
+  66%    263
+  75%    272
+  80%    277
+  90%    294
+  95%    310
+  98%    330
+  99%    341
+ 100%    380 (longest request)
+ 
+ Wnioski:
+ - długi czas oczekiwania na request (247.890 [ms])
+ - procesor się pocił (100% wykorzystania (2 CPU/ 4GB RAM)
+----------------------------------------------------------------------------------------------------
+Próba 3:
+-ten sam scenariusz co w próbie 2, zmniejszyłem ilość wyświetlanych slotów do 50
+ 
+Finished 1000 requests
+
+Server Software:        uvicorn
+Server Hostname:        127.0.0.1
+Server Port:            8000
+
+Document Path:          /slots
+Document Length:        10099 bytes
+
+Concurrency Level:      50
+Time taken for tests:   3.321 seconds
+Complete requests:      1000
+Failed requests:        0
+Total transferred:      10246000 bytes
+HTML transferred:       10099000 bytes
+Requests per second:    301.15 [#/sec] (mean)
+Time per request:       166.031 [ms] (mean)
+Time per request:       3.321 [ms] (mean, across all concurrent requests)
+Transfer rate:          3013.24 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       2
+Processing:    38  162  27.7    165     274
+Waiting:       25  149  26.6    153     263
+Total:         38  163  27.7    165     274
+
+Percentage of the requests served within a certain time (ms)
+  50%    165
+  66%    174
+  75%    181
+  80%    184
+  90%    193
+  95%    203
+  98%    216
+  99%    224
+ 100%    274 (longest request)
+ 
+ - spadł time per request: 166.031 [ms] vs 247.890 [ms]
+ - wzrosło zużycie CPU do 160% (dla 2 CPU limit to 200%) 
+ 
+----------------------------------------------------------------------------------------------------
+ Próba 4:
+-ten sam scenariusz co w próbie 2, zmniejszyłem ilość wyświetlanych slotów do 10
+ 
+Finished 1000 requests
+
+Server Software:        uvicorn
+Server Hostname:        127.0.0.1
+Server Port:            8000
+
+Document Path:          /slots
+Document Length:        2024 bytes
+
+Concurrency Level:      50
+Time taken for tests:   2.857 seconds
+Complete requests:      1000
+Failed requests:        0
+Total transferred:      2170000 bytes
+HTML transferred:       2024000 bytes
+Requests per second:    350.00 [#/sec] (mean)
+Time per request:       142.856 [ms] (mean)
+Time per request:       2.857 [ms] (mean, across all concurrent requests)
+Transfer rate:          741.71 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       2
+Processing:    16  142  47.8    122     297
+Waiting:       10  135  46.5    116     288
+Total:         16  142  47.8    122     297
+
+Percentage of the requests served within a certain time (ms)
+  50%    122
+  66%    182
+  75%    191
+  80%    194
+  90%    201
+  95%    206
+  98%    212
+  99%    222
+ 100%    297 (longest request)
+ 
+ - spadł time per request: 143 [ms] vs 247.890 [ms]
+ - wzrosło zużycie CPU do ponad 200% (wąskie gardło procesora zaczyna się pojawiać) 
+ 
+---------------------------------------------------------------------------------------------------- 
+ Próba 5:
+ - zwiększam limit do 500 slotow na strone
+ 
+Finished 1000 requests
+
+Server Software:        uvicorn
+Server Hostname:        127.0.0.1
+Server Port:            8000
+
+Document Path:          /slots
+Document Length:        99584 bytes
+
+Concurrency Level:      50
+Time taken for tests:   18.678 seconds
+Complete requests:      1000
+Failed requests:        0
+Total transferred:      99731000 bytes
+HTML transferred:       99584000 bytes
+Requests per second:    53.54 [#/sec] (mean)
+Time per request:       933.883 [ms] (mean)
+Time per request:       18.678 [ms] (mean, across all concurrent requests)
+Transfer rate:          5214.44 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.3      0       2
+Processing:    53  915 118.1    925    1259
+Waiting:       47  897 118.1    906    1215
+Total:         54  915 118.1    925    1259
+
+Percentage of the requests served within a certain time (ms)
+  50%    925
+  66%    958
+  75%    981
+  80%   1001
+  90%   1050
+  95%   1096
+  98%   1143
+  99%   1166
+ 100%   1259 (longest request)
+ 
+ - czas trwania około 933 ms na request
+ - procesor okolo 25% zajetosci
+ 
+ - przy zwiększeniu liczby slotow do 1000 na stronę to czas trwania około 1,7 sec/request
+ - przy 200 około 392 ms
+ 
+----------------------------------------------------------------------------------------------------
+TESTY USEROW (1000 requestow; 2 CPU; 50 slot/strona)
+----------------------------------------------------------------------------------------------------
+ Próba 6:
+ - 1000 zapytan, 80 uzytkownikow (20 ponad limit)
+ - 50 slotow na stronę (myślę, że to taki sweet spot, nikt raczej więcej nie wyświetla)
+ 
+Finished 1000 requests
+
+Server Software:        uvicorn
+Server Hostname:        127.0.0.1
+Server Port:            8000
+
+Document Path:          /slots
+Document Length:        10099 bytes
+
+Concurrency Level:      80
+Time taken for tests:   3.208 seconds
+Complete requests:      1000
+Failed requests:        0
+Total transferred:      10246000 bytes
+HTML transferred:       10099000 bytes
+Requests per second:    311.77 [#/sec] (mean)
+Time per request:       256.601 [ms] (mean)
+Time per request:       3.208 [ms] (mean, across all concurrent requests)
+Transfer rate:          3119.51 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       2
+Processing:    35  248  33.8    251     329
+Waiting:       32  226  33.1    230     300
+Total:         35  248  33.8    252     330
+
+Percentage of the requests served within a certain time (ms)
+  50%    252
+  66%    258
+  75%    266
+  80%    270
+  90%    283
+  95%    295
+  98%    301
+  99%    311
+ 100%    330 (longest request)
+ 
+ - wnioski 20 osob wskakuje w kolejkę i całkiem dobrze baza sobie radzi z ich obsługą
+ - zwalnia nam baza z 166.031 [ms] przy 50 osobach do 256 [ms] przy 80 osobach
+----------------------------------------------------------------------------------------------------
+ Próba 7:
+ - zwiększamy do 200 osób
+
+Finished 1000 requests
+
+Server Software:        uvicorn
+Server Hostname:        127.0.0.1
+Server Port:            8000
+
+Document Path:          /slots
+Document Length:        10099 bytes
+
+Concurrency Level:      200
+Time taken for tests:   3.144 seconds
+Complete requests:      1000
+Failed requests:        0
+Total transferred:      10246000 bytes
+HTML transferred:       10099000 bytes
+Requests per second:    318.05 [#/sec] (mean)
+Time per request:       628.825 [ms] (mean)
+Time per request:       3.144 [ms] (mean, across all concurrent requests)
+Transfer rate:          3182.40 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       1
+Processing:    35  580 130.7    631     721
+Waiting:       11  552 130.2    597     687
+Total:         35  580 130.7    631     721
+
+Percentage of the requests served within a certain time (ms)
+  50%    631
+  66%    638
+  75%    643
+  80%    647
+  90%    660
+  95%    666
+  98%    691
+  99%    696
+ 100%    721 (longest request)
+ 
+ - zero faili, ale baza zauważalnie zwalnia (628 ms/średnio)
+ 
+ - przy 500 osobach około 1,5 sekundy na request
+ 
+ - przy 1000 osobach około 3 sekundy na request
+ 
+ - próba zwiększenia do 1500 wyrzuciła nam środowisko
+----------------------------------------------------------------------------------------------------
+TESTY CPU (1000 requestow; 50 userow; 50 slotow/strona)
+----------------------------------------------------------------------------------------------------
+- 1 CPU
+Finished 1000 requests
+
+Server Software:        uvicorn
+Server Hostname:        127.0.0.1
+Server Port:            8000
+
+Document Path:          /slots
+Document Length:        10811 bytes
+
+Concurrency Level:      50
+Time taken for tests:   5.954 seconds
+Complete requests:      1000
+Failed requests:        997
+   (Connect: 0, Receive: 0, Length: 997, Exceptions: 0)
+Total transferred:      10213241 bytes
+HTML transferred:       10066241 bytes
+Requests per second:    167.95 [#/sec] (mean)
+Time per request:       297.701 [ms] (mean)
+Time per request:       5.954 [ms] (mean, across all concurrent requests)
+Transfer rate:          1675.15 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       1
+Processing:    16  291 101.6    299     605
+Waiting:       13  283 100.4    291     599
+Total:         16  291 101.6    299     605
+
+Percentage of the requests served within a certain time (ms)
+  50%    299
+  66%    324
+  75%    379
+  80%    386
+  90%    404
+  95%    426
+  98%    501
+  99%    520
+ 100%    605 (longest request)
+
+- już widać spadek wydajności w porównaniu do 2 CPU (297 ms/request vs około 150 ms/request)
+- obciążenie 100%
+----------------------------------------------------------------------------------------------------
+- 0.5 CPU
+Finished 1000 requests
+
+Server Software:        uvicorn
+Server Hostname:        127.0.0.1
+Server Port:            8000
+
+Document Path:          /slots
+Document Length:        10884 bytes
+
+Concurrency Level:      50
+Time taken for tests:   10.396 seconds
+Complete requests:      1000
+Failed requests:        992
+   (Connect: 0, Receive: 0, Length: 992, Exceptions: 0)
+Total transferred:      10243352 bytes
+HTML transferred:       10096352 bytes
+Requests per second:    96.19 [#/sec] (mean)
+Time per request:       519.795 [ms] (mean)
+Time per request:       10.396 [ms] (mean, across all concurrent requests)
+Transfer rate:          962.23 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       1
+Processing:    19  506 227.7    495    1741
+Waiting:       15  501 227.1    490    1732
+Total:         19  506 227.7    495    1741
+
+Percentage of the requests served within a certain time (ms)
+  50%    495
+  66%    590
+  75%    612
+  80%    687
+  90%    799
+  95%    910
+  98%   1085
+  99%   1193
+ 100%   1741 (longest request)
+ 
+ - 519,795 ms/request
+----------------------------------------------------------------------------------------------------
+- 0.3 CPU 
+ 
+Finished 1000 requests
+
+Server Software:        uvicorn
+Server Hostname:        127.0.0.1
+Server Port:            8000
+
+Document Path:          /slots
+Document Length:        10845 bytes
+
+Concurrency Level:      50
+Time taken for tests:   18.367 seconds
+Complete requests:      1000
+Failed requests:        997
+   (Connect: 0, Receive: 0, Length: 997, Exceptions: 0)
+Total transferred:      10179445 bytes
+HTML transferred:       10032445 bytes
+Requests per second:    54.45 [#/sec] (mean)
+Time per request:       918.325 [ms] (mean)
+Time per request:       18.367 [ms] (mean, across all concurrent requests)
+Transfer rate:          541.25 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       1
+Processing:    15  899 476.3    802    3017
+Waiting:       13  897 476.1    800    3015
+Total:         15  899 476.3    803    3017
+
+Percentage of the requests served within a certain time (ms)
+  50%    803
+  66%   1002
+  75%   1188
+  80%   1227
+  90%   1504
+  95%   1807
+  98%   2091
+  99%   2504
+ 100%   3017 (longest request) 
+ 
+ - 918.325 [ms]/request
+----------------------------------------------------------------------------------------------------
+- 0.1 CPU
+
+Finished 1000 requests
+
+Server Software:        uvicorn
+Server Hostname:        127.0.0.1
+Server Port:            8000
+
+Document Path:          /slots
+Document Length:        10837 bytes
+
+Concurrency Level:      50
+Time taken for tests:   61.459 seconds
+Complete requests:      1000
+Failed requests:        997
+   (Connect: 0, Receive: 0, Length: 997, Exceptions: 0)
+Total transferred:      10209331 bytes
+HTML transferred:       10062331 bytes
+Requests per second:    16.27 [#/sec] (mean)
+Time per request:       3072.950 [ms] (mean)
+Time per request:       61.459 [ms] (mean, across all concurrent requests)
+Transfer rate:          162.22 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       1
+Processing:    13 3027 1687.3   2799   12417
+Waiting:       12 3026 1687.2   2798   12417
+Total:         13 3027 1687.3   2799   12417
+
+Percentage of the requests served within a certain time (ms)
+  50%   2799
+  66%   3396
+  75%   3798
+  80%   4094
+  90%   4899
+  95%   5894
+  98%   7205
+  99%  10616
+ 100%  12417 (longest request)

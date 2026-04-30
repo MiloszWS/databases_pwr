@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from app.database import engine, get_sql_query
+from sqlalchemy import create_engine, text
 app = FastAPI()
 
 @app.get("/")
@@ -9,37 +10,66 @@ def welcome():
         "status": "online",
         "lista endpointów": "/docs"  # Podpowiadamy, gdzie szukać dokumentacji
     }
+
 @app.get("/trainers")
 def get_trainers():
     try:
-        #Pobieramy treści kwerendy z pliku sql/get_trainers.sql
-        query = get_sql_query("get_trainers")
+        # 1. Pobierasz czysty tekst z pliku .sql
+        query_string = get_sql_query("get_trainers")
 
-        #Łączenie i wykonanie zapytania
-        with engine.connect() as connection:
-            result = connection.execute(query)
+        with engine.connect() as conn:
+            # 2. Musisz użyć text(), aby SQLAlchemy zrozumiało kwerendę
+            result = conn.execute(text(query_string))
 
-            trainers_list = []
+            # 3. Mapowanie wyników
+            trainers = [{"id": r.id, "name": r.full_name} for r in result]
+            return {"status": "success", "data": trainers}
+    except Exception as e:
+        print(f"BŁĄD TRENERÓW: {e}")
+        raise HTTPException(status_code=500, detail="Błąd pobierania trenerów")
+@app.get("/slots")
+def get_slots():
+    try:
+        # 1. Wczytujemy zapytanie z pliku
+        query_string = get_sql_query("get_slots_data")
+
+        with engine.connect() as conn:
+            result = conn.execute(text(query_string))
+
+            slots_list = []
             for row in result:
-                trainers_list.append({"id": row.id, "name": row.full_name, "email": row.email})
-            return {"trainers": trainers_list}
+                # 2. Logika obliczeniowa (zamiast w widoku SQL, robimy to tutaj)
+                remaining = row.capacity - row.occupied_count
+
+                slots_list.append({
+                    "id": row.id,
+                    "time": row.start_time,
+                    "trainer": row.trainer_name,
+                    "location": f"{row.gym_name}, {row.city_name}",
+                    "service": row.service_name,
+                    "availability": {
+                        "total": row.capacity,
+                        "taken": row.occupied_count,
+                        "free": remaining
+                    },
+                    "can_book": remaining > 0
+                })
+
+            return {"status": "success", "data": slots_list}
 
     except Exception as e:
-        # Obsługa błędu jeśli nie stworzymy pliku
-        raise HTTPException(status_code=500, detail=f"Błąd bazy: {str(e)}")
-@app.get("/slots")
-def get_available_slots():
-    query = get_sql_query("get_available_slots")
-    with engine.connect() as conn:
-        result = conn.execute(query)
-        return {"available_slots": [dict(row._mapping) for row in result]}
+        print(f"BŁĄD: {e}")
+        raise HTTPException(status_code=500, detail="Błąd pobierania slotów")
+
 @app.post("/book")
 def make_booking(slot_id: int, client_id: int):
+    # 1. Pobierasz surowy string kwerendy
     query = get_sql_query("create_booking")
-    with engine.begin() as conn:  # engine.begin automatycznie zatwierdzi zmiany (commit)
-        result = conn.execute(query, {"sid": slot_id, "cid": client_id})
 
-        # Jeśli nic nie wstawiono, znaczy że nie było miejsc
+    with engine.begin() as conn:
+        # 2. OPAKUJESZ W text(), aby parametry (:sid, :cid) zadziałały
+        result = conn.execute(text(query), {"sid": slot_id, "cid": client_id})
+
         if result.rowcount == 0:
             raise HTTPException(status_code=400, detail="Brak wolnych miejsc w tym slocie")
 

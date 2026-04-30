@@ -116,6 +116,7 @@ CREATE TABLE `payments` (
   CONSTRAINT `fk_payments_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+/*
 CREATE OR REPLACE VIEW available_slots_view AS
 SELECT 
     s.id AS slot_id,
@@ -133,3 +134,4 @@ JOIN trainers t ON s.trainer_id = t.id
 JOIN gyms g ON s.gym_id = g.id
 JOIN cities c ON g.city_id = c.id
 JOIN services sv ON s.service_id = sv.id;
+*/

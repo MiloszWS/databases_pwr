@@ -13,10 +13,12 @@ To install project there is needed uvicorn tool and local server database genera
   macOS / Linux: curl -LsSf https://astral.sh/uv/install.sh | sh
   Windows (PowerShell): powershell -c "irm https://astral.sh | iex"
 ```
-#### To install XAMPP:
+#### To install XAMPP (optional eg. for apache benchmark):
 ```text
   Download it from official site: https://www.apachefriends.org/pl/index.html
 ```
+#### To install Docker:
+  Downaload and install Docker Desktop: https://www.docker.com/products/docker-desktop/
 
 ## Installation
 
@@ -41,7 +43,7 @@ To install project there is needed uvicorn tool and local server database genera
 #### To deploy this project run
 
 ```text
-  1. Open XAMPP and run MySQL server
+  1. In terminal in your project run 'docker-compose up -d'
 
   2. In Your IDE create connection with running server. (In VS Code use Database Client extension)
 
@@ -50,6 +52,10 @@ To install project there is needed uvicorn tool and local server database genera
   4. To create massive data seed run app/generate_data.py
 
   5. To start running aplication paste in terminal: uvicorn app.main:app --reload
+
+  6. To close docker enter in terminal 'docker-compose down -v'
+
+  7. To run Apache Benchmark go to ab.exe directory (if you have xampp it is in xampp/apache/bin) open powershell and run '.\ab.exe -n 1000 -c 50 http://127.0.0.1:8000/slots' where -n 1000 is number of request and -c 50 is number of hosts trying to connect to db
 ```
 
 
